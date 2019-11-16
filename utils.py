@@ -69,7 +69,6 @@ class YoutubeUtils(CommonUtils):
         try:
             async with client.get(url=self.BASE_URL, params={"q": query}) as request:
                 json_data = await request.json()
-                print(json_data)
                 item = json_data["items"][0]
 
 
