@@ -8,7 +8,7 @@ from aiogram.utils.exceptions import BadRequest
 
 from utils import GoogleUtils, YoutubeUtils
 
-TOKEN = "628700571:AAGU3hcpuCJhF46LuqvVK3x_qZ_U00l2Yr8"
+TOKEN = os.getenv("BOT_TOKEN")
 VERSION = "0.0.1"
 ADMIN_ID = int(os.getenv("ADMIN_ID")) if os.getenv("ADMIN_ID") else 0
 
