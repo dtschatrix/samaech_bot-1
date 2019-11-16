@@ -63,7 +63,7 @@ async def google(message: types.Message):
 
         if command == "/g":
 
-            response = google_api.search(query)
+            response = await google_api.search(query)
 
             if response.code != 404:
                 await types.ChatActions.typing()
@@ -76,7 +76,7 @@ async def google(message: types.Message):
                 return await not_found(message)
 
         if command in ["/gi", "/p"]:
-            response = google_api.search(query, search_type="image")
+            response = await google_api.search(query, search_type="image")
 
             if response.code != 404:
                 try:
@@ -109,7 +109,7 @@ async def youtube(message: types.Message):
     query = google_api.prepare_query(message)
 
     if query:
-        response = youtube_api.search(query)
+        response = await youtube_api.search(query)
 
         if response.code != 404:
             await types.ChatActions.typing()

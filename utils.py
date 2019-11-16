@@ -3,7 +3,9 @@ from aiogram import types
 import os
 import requests
 import random
+from aiohttp import ClientSession
 
+client = ClientSession()
 
 class GoogleSearchResult:
     def __init__(self, title: str, link: str, snippet: str):
@@ -63,11 +65,13 @@ class YoutubeUtils(CommonUtils):
     GOOGLE_API_KEY: Optional[str] = os.getenv("GOOGLE_API_KEY")
     BASE_URL: str = f"https://www.googleapis.com/youtube/v3/search?part=snippet&key={GOOGLE_API_KEY}&maxResults=1&type=video"
 
-    def search(self, query: str):
+    async def search(self, query: str):
         try:
-            request = requests.get(self.BASE_URL, params={"q": query})
-            json_data = request.json()
-            item = json_data["items"][0]
+            async with client.get(url=self.BASE_URL, params={"q": query}) as request:
+                json_data = await request.json()
+                print(json_data)
+                item = json_data["items"][0]
+
 
             return YoutubeSearchResult(
                 video_id=item["id"]["videoId"],
@@ -85,27 +89,23 @@ class GoogleUtils(CommonUtils):
     GOOGLE_CX: Optional[str] = os.getenv("GOOGLE_CX")
     BASE_URL: str = f"https://www.googleapis.com/customsearch/v1?key={GOOGLE_API_KEY}&cx={GOOGLE_CX}"
 
-    def search(
+    async def search(
         self, query: str, search_type: str = "text"
     ) -> Union[GoogleSearchResult, GoogleImageResult, NotFoundResult]:
         try:
             if search_type == "text":
-                request = requests.get(
-                    f"{self.BASE_URL}", params={"q": query, "num": 1}
-                )
-                json_data = request.json()
-                item = json_data["items"][0]
+                async with client.get(url=f"{self.BASE_URL}", params={"q": query, "num": 1}) as request:
+                    json_data = await request.json()
+                    item = json_data["items"][0]
 
                 return GoogleSearchResult(
                     title=item["title"], link=item["link"], snippet=item["snippet"]
                 )
 
             if search_type == "image":
-                request = requests.get(
-                    f"{self.BASE_URL}", params={"q": query, "searchType": "image"}
-                )
-                json_data = request.json()
-                item = random.choice(json_data["items"])
+                async with client.get(url=f"{self.BASE_URL}", params={"q": query, "searchType": "image"}) as request:
+                    json_data = await request.json()
+                    item = random.choice(json_data["items"])
 
                 return GoogleImageResult(
                     link=item["link"],
