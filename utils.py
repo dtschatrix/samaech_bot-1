@@ -1,11 +1,13 @@
-from typing import Optional, Union
+from re import sub
+from typing import Optional, Dict, List, Union
 from aiogram import types
 import os
-import requests
 import random
 from aiohttp import ClientSession
+from html.parser import HTMLParser
 
 client = ClientSession()
+
 
 class GoogleSearchResult:
     def __init__(self, title: str, link: str, snippet: str):
@@ -71,7 +73,6 @@ class YoutubeUtils(CommonUtils):
                 json_data = await request.json()
                 item = json_data["items"][0]
 
-
             return YoutubeSearchResult(
                 video_id=item["id"]["videoId"],
                 title=item["snippet"]["title"],
@@ -93,7 +94,9 @@ class GoogleUtils(CommonUtils):
     ) -> Union[GoogleSearchResult, GoogleImageResult, NotFoundResult]:
         try:
             if search_type == "text":
-                async with client.get(url=f"{self.BASE_URL}", params={"q": query, "num": 1}) as request:
+                async with client.get(
+                    url=f"{self.BASE_URL}", params={"q": query, "num": 1}
+                ) as request:
                     json_data = await request.json()
                     item = json_data["items"][0]
 
@@ -102,7 +105,9 @@ class GoogleUtils(CommonUtils):
                 )
 
             if search_type == "image":
-                async with client.get(url=f"{self.BASE_URL}", params={"q": query, "searchType": "image"}) as request:
+                async with client.get(
+                    url=f"{self.BASE_URL}", params={"q": query, "searchType": "image"}
+                ) as request:
                     json_data = await request.json()
                     item = random.choice(json_data["items"])
 
@@ -117,3 +122,38 @@ class GoogleUtils(CommonUtils):
         except (KeyError, IndexError):
             return NotFoundResult()
 
+
+class DvachThread:
+    def __init__(self, link: str, image: str):
+        self.link = link
+        self.image = image
+
+
+class DvachUtils(CommonUtils):
+    async def parse_thread_data(
+        self, response: Dict, subject: str, board: str
+    ) -> Optional[DvachThread]:
+        for thread in response["threads"]:
+            if thread["posts"][0]["tags"] == subject:
+                image = f'https://2ch.hk{random.choice(thread["posts"][0]["files"])["path"]}'
+                print(image)
+                thread_link = f'https://2ch.hk/{board}/res/{thread["thread_num"]}.html'
+                return DvachThread(link=thread_link, image=image)
+
+    async def get_thread(
+        self, board: str, subject: str, pages: List[str] = ["index", "1"]
+    ) -> DvachThread:
+        for page in pages:
+            async with client.get(
+                url=f"https://2ch.hk/{board}/{page}.json", verify_ssl=False
+            ) as request:
+                json_data = await request.json()
+
+                result = await self.parse_thread_data(json_data, subject, board)
+
+                if result:
+                    return result
+
+        return DvachThread(
+            link="Тред на нулевой не найден", image="./content/img/not-found.png"
+        )

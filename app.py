@@ -6,7 +6,7 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.utils.exceptions import BadRequest
 
 
-from utils import GoogleUtils, YoutubeUtils
+from utils import GoogleUtils, YoutubeUtils, DvachUtils
 
 TOKEN = os.getenv("BOT_TOKEN")
 VERSION = "0.0.1"
@@ -18,6 +18,7 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 google_api = GoogleUtils()
 youtube_api = YoutubeUtils()
+dvach_api = DvachUtils()
 
 
 async def not_found(message: types.Message) -> None:
@@ -122,6 +123,16 @@ async def youtube(message: types.Message):
             return await not_found(message)
 
     return await empty_query(message)
+
+
+@dp.message_handler(commands=["thread"])
+async def get_last_dotathread(message: types.Message):
+    thread = await dvach_api.get_thread("vg", "dota2")
+    return await message.reply_photo(
+        thread.image if "https" in thread.image else types.InputFile(thread.image),
+        caption=f"<b>{thread.link}</b>",
+        parse_mode="HTML",
+    )
 
 
 if __name__ == "__main__":
