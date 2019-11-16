@@ -155,19 +155,28 @@ async def get_last_dotathread(message: types.Message):
 async def get_post_from_dotathread(message: types.Message):
     command = message.text.split()[0]
     thread = await dvach_api.get_thread("vg", "dota2")
+    post_data = None
 
-    if command == "/randpost":
+    if command == "/randpost" or command == "/randpost@samaech_bot":
         post_data = await dvach_api.get_post(thread_id=thread.thread_id)
 
-    else:
+    elif command == "/randpost" or command == "/randpost@samaech_bot":
         post_data = await dvach_api.get_post(thread_id=thread.thread_id, offset="last")
 
     keys = types.InlineKeyboardMarkup()
     keys.add(types.InlineKeyboardButton("Go to message!", url=post_data.message_link))
 
-    if post_data.images:
+    content = post_data.images[0]
+    content_extension = content.split(".")[-1]
+
+    if content_extension == "jpg" or content_extension == "png":
         return await message.reply_photo(
-            post_data.images[0], caption=post_data.message, reply_markup=keys
+            content, caption=post_data.message, reply_markup=keys
+        )
+
+    if content_extension == "mp4":
+        return await message.reply_video(
+            content, caption=post_data.message, reply_markup=keys
         )
 
     return await message.reply(post_data.message, reply_markup=keys)
