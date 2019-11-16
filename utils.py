@@ -3,7 +3,9 @@ import random
 from typing import Dict, List, Optional, Union
 
 from aiogram import types
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
+from aiohttp.client_exceptions import ContentTypeError
+
 from html.parser import HTMLParser
 
 from lib.types import (
@@ -15,7 +17,7 @@ from lib.types import (
     YoutubeSearchResult,
 )
 
-client = ClientSession()
+client = ClientSession(timeout=ClientTimeout(total=30))
 
 
 class MLStripper(HTMLParser):
@@ -154,20 +156,25 @@ class DvachUtils(CommonUtils):
         URL = f"https://2ch.hk/makaba/mobile.fcgi?task=get_thread&board=vg&thread={thread_id}&num={thread_id}"
         THREAD_LINK = f"https://2ch.hk/vg/res/{thread_id}.html"
         async with client.get(URL, verify_ssl=False) as response:
-            if offset == "last":
-                post_data = (await response.json())[-1]
-            elif offset == "random":
-                post_data = random.choice(await response.json())
-            else:
-                return
+            try:
+                if offset == "last":
+                    post_data = (await response.json())[-1]
+                elif offset == "random":
+                    post_data = random.choice(await response.json())
+                else:
+                    return
 
-            images = [
-                f'https://2ch.hk{_file["path"]}'
-                for _file in post_data["files"]
-                if post_data["files"]
-            ]
+                images = [
+                    f'https://2ch.hk{_file["path"]}'
+                    for _file in post_data["files"]
+                    if post_data["files"]
+                ]
 
-            message = self.strip_tags(post_data["comment"].replace("<br>", "\n"))
-            message_link = f'{THREAD_LINK}#{post_data["num"]}'
+                message = self.strip_tags(post_data["comment"].replace("<br>", "\n"))
+                message_link = f'{THREAD_LINK}#{post_data["num"]}'
 
-            return DvachPost(message=message, message_link=message_link, images=images)
+                return DvachPost(
+                    message=message, message_link=message_link, images=images
+                )
+            except ContentTypeError:
+                return DvachPost(message="API отвалилось.", message_link="#")

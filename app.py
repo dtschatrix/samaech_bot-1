@@ -1,14 +1,16 @@
 import logging
 import os
+import random
 
-from aiogram import Bot, Dispatcher, executor, types
-from aiogram.utils.exceptions import BadRequest
+from aiogram import Bot, Dispatcher, executor, types, filters
+from aiogram.utils.exceptions import BadRequest, URLHostIsEmpty
 
 from utils import DvachUtils, GoogleUtils, YoutubeUtils
 
 TOKEN = os.getenv("BOT_TOKEN")
 VERSION = "0.0.2"
 ADMIN_ID = int(os.getenv("ADMIN_ID")) if os.getenv("ADMIN_ID") else 0
+BOT_NAME = "Валентин"
 
 logging.basicConfig(level=logging.INFO)
 
@@ -160,26 +162,48 @@ async def get_post_from_dotathread(message: types.Message):
     if command == "/randpost" or command == "/randpost@samaech_bot":
         post_data = await dvach_api.get_post(thread_id=thread.thread_id)
 
-    elif command == "/randpost" or command == "/randpost@samaech_bot":
+    elif command == "/lastpost" or command == "/lastpost@samaech_bot":
         post_data = await dvach_api.get_post(thread_id=thread.thread_id, offset="last")
 
     keys = types.InlineKeyboardMarkup()
     keys.add(types.InlineKeyboardButton("Go to message!", url=post_data.message_link))
 
-    content = post_data.images[0]
-    content_extension = content.split(".")[-1]
+    if post_data.images:
+        content = post_data.images[0]
+        content_extension = content.split(".")[-1]
 
-    if content_extension == "jpg" or content_extension == "png":
-        return await message.reply_photo(
-            content, caption=post_data.message, reply_markup=keys
-        )
+        if content_extension == "jpg" or content_extension == "png":
+            return await message.reply_photo(
+                content, caption=post_data.message, reply_markup=keys
+            )
 
-    if content_extension == "mp4":
-        return await message.reply_video(
-            content, caption=post_data.message, reply_markup=keys
-        )
+        if content_extension == "mp4":
+            return await message.reply_video(
+                content, caption=post_data.message, reply_markup=keys
+            )
 
     return await message.reply(post_data.message, reply_markup=keys)
+
+
+first_word = ("Я думаю, ", "", "Наверное, ", "Базарю, ", "Возможно, ", "Конечно же, ")
+
+
+@dp.message_handler(regexp=rf"{BOT_NAME}, (.*\S.*) или (.*\S.*)\?")
+async def fate_decision_or(message: types.Message):
+    _message = message.text[len(BOT_NAME) + 2 : -1]
+    return await message.reply(
+        f"{random.choice(first_word)}{random.choice(_message.split(' или '))}."
+    )
+
+
+@dp.message_handler(regexp=rf"{BOT_NAME}, (.*\S.*) ли (.*\S.*)\?")
+async def fate_decision(message: types.Message):
+    _message = message.text[len(BOT_NAME) + 2 : -1]
+
+    correct_answer = f"{random.choice(first_word)}{_message.split(' ли ')[1]} {_message.split(' ли ')[0]}."
+    incorrect_answer = random.choice(("Нет.", "Ни в коем случае."))
+
+    return await message.reply(random.choice([correct_answer, incorrect_answer]))
 
 
 if __name__ == "__main__":
