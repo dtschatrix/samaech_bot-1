@@ -51,7 +51,7 @@ async def version(message: types.Message):
         await message.reply(f"<b>Version: {VERSION}</b>", parse_mode="HTML")
 
 
-@dp.message_handler(commands=["g", "gi"])
+@dp.message_handler(commands=["g", "gi", "p"])
 async def google(message: types.Message):
     """
     Google Search
@@ -75,7 +75,7 @@ async def google(message: types.Message):
             else:
                 return await not_found(message)
 
-        if command == "/gi":
+        if command in ["/gi", "/p"]:
             response = google_api.search(query, search_type="image")
 
             if response.code != 404:
