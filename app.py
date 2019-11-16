@@ -2,11 +2,9 @@ import logging
 import os
 
 from aiogram import Bot, Dispatcher, executor, types
-
 from aiogram.utils.exceptions import BadRequest
 
-
-from utils import GoogleUtils, YoutubeUtils, DvachUtils
+from utils import DvachUtils, GoogleUtils, YoutubeUtils
 
 TOKEN = os.getenv("BOT_TOKEN")
 VERSION = "0.0.1"
@@ -69,10 +67,12 @@ async def google(message: types.Message):
             if response.code != 404:
                 await types.ChatActions.typing()
 
-                result = f"<b>{response.title}</b>\n\n<i>{response.snippet}</i>\n\n{response.link}"
-                return await message.reply(
-                    result, parse_mode="HTML", disable_web_page_preview=True
-                )
+                result = f"<b>{response.title}</b>\n\n<i>{response.snippet}</i>"
+
+                keys = types.InlineKeyboardMarkup()
+                keys.add(types.InlineKeyboardButton("Source Link", url=response.link))
+
+                return await message.reply(result, parse_mode="HTML", reply_markup=keys)
             else:
                 return await not_found(message)
 
@@ -83,9 +83,20 @@ async def google(message: types.Message):
                 try:
                     await types.ChatActions.typing()
 
-                    caption = f"<i>{response.snippet}</i>\n\n{response.context_link}"
+                    caption = f"<i>{response.snippet}</i>"
+
+                    keys = types.InlineKeyboardMarkup()
+                    keys.add(
+                        types.InlineKeyboardButton(
+                            "Source Link", url=response.context_link
+                        )
+                    )
+
                     return await message.reply_photo(
-                        photo=response.link, caption=caption, parse_mode="HTML"
+                        photo=response.link,
+                        caption=caption,
+                        parse_mode="HTML",
+                        reply_markup=keys,
                     )
                 except BadRequest:
                     await types.ChatActions.typing()
@@ -114,8 +125,10 @@ async def youtube(message: types.Message):
 
         if response.code != 404:
             await types.ChatActions.typing()
-            result = f"<b>{response.title}</b>\n\n<i>{response.description}</i>\n\n<b>{response.link}</b>"
-            return await message.reply(result, parse_mode="HTML")
+            result = f'<a href="{response.link}">{response.title}</a>\n\n<i>{response.description}</i>'
+            keys = types.InlineKeyboardMarkup()
+            keys.add(types.InlineKeyboardButton("Open in YouTube", url=response.link))
+            return await message.reply(result, parse_mode="HTML", reply_markup=keys)
 
         else:
             await types.ChatActions.typing()
@@ -128,10 +141,13 @@ async def youtube(message: types.Message):
 @dp.message_handler(commands=["thread"])
 async def get_last_dotathread(message: types.Message):
     thread = await dvach_api.get_thread("vg", "dota2")
+
+    keys = types.InlineKeyboardMarkup()
+    keys.add(types.InlineKeyboardButton("Go to thread!", url=thread.link))
+
     return await message.reply_photo(
         thread.image if "https" in thread.image else types.InputFile(thread.image),
-        caption=f"<b>{thread.link}</b>",
-        parse_mode="HTML",
+        reply_markup=keys,
     )
 
 

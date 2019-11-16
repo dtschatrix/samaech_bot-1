@@ -1,10 +1,9 @@
-from re import sub
-from typing import Optional, Dict, List, Union
-from aiogram import types
 import os
 import random
+from typing import Dict, List, Optional, Union
+
+from aiogram import types
 from aiohttp import ClientSession
-from html.parser import HTMLParser
 
 client = ClientSession()
 
@@ -69,7 +68,9 @@ class YoutubeUtils(CommonUtils):
 
     async def search(self, query: str):
         try:
-            async with client.get(url=self.BASE_URL, params={"q": query}) as request:
+            async with client.get(
+                url=self.BASE_URL, params={"q": query}, verify_ssl=False
+            ) as request:
                 json_data = await request.json()
                 item = json_data["items"][0]
 
@@ -95,7 +96,9 @@ class GoogleUtils(CommonUtils):
         try:
             if search_type == "text":
                 async with client.get(
-                    url=f"{self.BASE_URL}", params={"q": query, "num": 1}
+                    url=f"{self.BASE_URL}",
+                    params={"q": query, "num": 1},
+                    verify_ssl=False,
                 ) as request:
                     json_data = await request.json()
                     item = json_data["items"][0]
@@ -106,7 +109,9 @@ class GoogleUtils(CommonUtils):
 
             if search_type == "image":
                 async with client.get(
-                    url=f"{self.BASE_URL}", params={"q": query, "searchType": "image"}
+                    url=f"{self.BASE_URL}",
+                    params={"q": query, "searchType": "image"},
+                    verify_ssl=False,
                 ) as request:
                     json_data = await request.json()
                     item = random.choice(json_data["items"])
