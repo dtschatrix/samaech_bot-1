@@ -14,6 +14,7 @@ logging.basicConfig(level=logging.INFO)
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
+
 google_api = GoogleUtils()
 youtube_api = YoutubeUtils()
 dvach_api = DvachUtils()
@@ -43,11 +44,10 @@ async def voice_recognition(message: types.Message):
     await message.reply("Not Implemented Yet")
 
 
-@dp.message_handler(commands=["ver"])
+@dp.message_handler(commands=["ver"], user_id=ADMIN_ID)
 async def version(message: types.Message):
-    if message.from_user.id == ADMIN_ID:
-        await types.ChatActions.typing()
-        await message.reply(f"<b>Version: {VERSION}</b>", parse_mode="HTML")
+    await types.ChatActions.typing()
+    await message.reply(f"<b>Version: {VERSION}</b>", parse_mode="HTML")
 
 
 @dp.message_handler(commands=["g", "gi", "p"])
@@ -149,6 +149,28 @@ async def get_last_dotathread(message: types.Message):
         thread.image if "https" in thread.image else types.InputFile(thread.image),
         reply_markup=keys,
     )
+
+
+@dp.message_handler(commands=["randpost", "lastpost"])
+async def get_post_from_dotathread(message: types.Message):
+    command = message.text.split()[0]
+    thread = await dvach_api.get_thread("vg", "dota2")
+
+    if command == "/randpost":
+        post_data = await dvach_api.get_post(thread_id=thread.thread_id)
+
+    else:
+        post_data = await dvach_api.get_post(thread_id=thread.thread_id, offset="last")
+
+    keys = types.InlineKeyboardMarkup()
+    keys.add(types.InlineKeyboardButton("Go to message!", url=post_data.message_link))
+
+    if post_data.images:
+        return await message.reply_photo(
+            post_data.images[0], caption=post_data.message, reply_markup=keys
+        )
+
+    return await message.reply(post_data.message, reply_markup=keys)
 
 
 if __name__ == "__main__":

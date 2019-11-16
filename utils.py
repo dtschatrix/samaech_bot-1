@@ -4,50 +4,32 @@ from typing import Dict, List, Optional, Union
 
 from aiogram import types
 from aiohttp import ClientSession
+from html.parser import HTMLParser
+
+from lib.types import (
+    DvachPost,
+    DvachThread,
+    GoogleImageResult,
+    GoogleSearchResult,
+    NotFoundResult,
+    YoutubeSearchResult,
+)
 
 client = ClientSession()
 
 
-class GoogleSearchResult:
-    def __init__(self, title: str, link: str, snippet: str):
-        self.code = 200
-        self.message = "OK"
-        self.title = title
-        self.link = link
-        self.snippet = snippet
-
-
-class GoogleImageResult:
-    def __init__(self, link: str, snippet: str, context_link: str):
-        self.code = 200
-        self.message = "OK"
-        self.link = link
-        self.snippet = snippet
-        self.title = ""
-        self.context_link = context_link
-
-
-class YoutubeSearchResult:
-    LINK_TEMPLATE = "https://www.youtube.com/watch?v="
-
-    def __init__(self, video_id: str, title: str, description: str, channel: str):
-        self.code = 200
-        self.message = "OK"
-        self.link = f"{self.LINK_TEMPLATE}{video_id}"
-        self.title = title
-        self.description = description
-        self.channel = channel
-
-
-class NotFoundResult:
+class MLStripper(HTMLParser):
     def __init__(self):
-        self.code = 404
-        self.message = "Not Found"
-        self.link = ""
-        self.snippet = ""
-        self.title = ""
-        self.description = ""
-        self.context_link = ""
+        self.reset()
+        self.strict = False
+        self.convert_charrefs = True
+        self.fed = []
+
+    def handle_data(self, d):
+        self.fed.append(d)
+
+    def get_data(self):
+        return "".join(self.fed)
 
 
 class CommonUtils:
@@ -60,6 +42,11 @@ class CommonUtils:
         args = message.split()[1:]
         if args:
             return " ".join(args)
+
+    def strip_tags(self, html):
+        s = MLStripper()
+        s.feed(html)
+        return s.get_data()
 
 
 class YoutubeUtils(CommonUtils):
@@ -128,12 +115,6 @@ class GoogleUtils(CommonUtils):
             return NotFoundResult()
 
 
-class DvachThread:
-    def __init__(self, link: str, image: str):
-        self.link = link
-        self.image = image
-
-
 class DvachUtils(CommonUtils):
     async def parse_thread_data(
         self, response: Dict, subject: str, board: str
@@ -141,12 +122,14 @@ class DvachUtils(CommonUtils):
         for thread in response["threads"]:
             if thread["posts"][0]["tags"] == subject:
                 image = f'https://2ch.hk{random.choice(thread["posts"][0]["files"])["path"]}'
-                print(image)
+
                 thread_link = f'https://2ch.hk/{board}/res/{thread["thread_num"]}.html'
-                return DvachThread(link=thread_link, image=image)
+                return DvachThread(
+                    link=thread_link, image=image, thread_id=thread["thread_num"]
+                )
 
     async def get_thread(
-        self, board: str, subject: str, pages: List[str] = ["index", "1"]
+        self, board: str, subject: str, pages: List[str] = ["index", "1", "2"]
     ) -> DvachThread:
         for page in pages:
             async with client.get(
@@ -160,5 +143,31 @@ class DvachUtils(CommonUtils):
                     return result
 
         return DvachThread(
-            link="Тред на нулевой не найден", image="./content/img/not-found.png"
+            link="Тред на нулевой не найден",
+            image="./content/img/not-found.png",
+            thread_id="",
         )
+
+    async def get_post(
+        self, thread_id: str, offset: str = "random"
+    ) -> Optional[DvachPost]:
+        URL = f"https://2ch.hk/makaba/mobile.fcgi?task=get_thread&board=vg&thread={thread_id}&num={thread_id}"
+        THREAD_LINK = f"https://2ch.hk/vg/res/{thread_id}.html"
+        async with client.get(URL, verify_ssl=False) as response:
+            if offset == "last":
+                post_data = (await response.json())[-1]
+            elif offset == "random":
+                post_data = random.choice(await response.json())
+            else:
+                return
+
+            images = [
+                f'https://2ch.hk{_file["path"]}'
+                for _file in post_data["files"]
+                if post_data["files"]
+            ]
+
+            message = self.strip_tags(post_data["comment"].replace("<br>", "\n"))
+            message_link = f'{THREAD_LINK}#{post_data["num"]}'
+
+            return DvachPost(message=message, message_link=message_link, images=images)
