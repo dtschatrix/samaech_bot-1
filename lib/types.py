@@ -8,6 +8,7 @@ class GoogleSearchResult:
         self.title = title
         self.link = link
         self.snippet = snippet
+        self.context_link = ""
 
 
 class GoogleImageResult:
