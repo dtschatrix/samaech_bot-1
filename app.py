@@ -7,7 +7,7 @@ from aiogram.utils.exceptions import BadRequest
 from utils import DvachUtils, GoogleUtils, YoutubeUtils
 
 TOKEN = os.getenv("BOT_TOKEN")
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 ADMIN_ID = int(os.getenv("ADMIN_ID")) if os.getenv("ADMIN_ID") else 0
 
 logging.basicConfig(level=logging.INFO)
@@ -50,7 +50,7 @@ async def version(message: types.Message):
     await message.reply(f"<b>Version: {VERSION}</b>", parse_mode="HTML")
 
 
-@dp.message_handler(commands=["g", "gi", "p"])
+@dp.message_handler(commands=["g", "gi", "p"], chat_id=-1001141653473)
 async def google(message: types.Message):
     """
     Google Search
@@ -113,7 +113,7 @@ async def google(message: types.Message):
     return await empty_query(message)
 
 
-@dp.message_handler(commands=["y"])
+@dp.message_handler(commands=["y"], chat_id=-1001141653473)
 async def youtube(message: types.Message):
     """
     YouTube Search
