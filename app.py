@@ -2,15 +2,17 @@ import logging
 import os
 import random
 
-from aiogram import Bot, Dispatcher, executor, types, filters
-from aiogram.utils.exceptions import BadRequest, URLHostIsEmpty
+from aiogram import Bot, Dispatcher, types
+from aiogram.utils.exceptions import BadRequest
 
 from utils import DvachUtils, GoogleUtils, YoutubeUtils
 
 TOKEN = os.getenv("BOT_TOKEN")
 VERSION = "0.0.2"
 ADMIN_ID = int(os.getenv("ADMIN_ID")) if os.getenv("ADMIN_ID") else 0
+
 BOT_NAME = "Валентин"
+first_word = ("Я думаю, ", "", "Наверное, ", "Базарю, ", "Возможно, ", "Конечно же, ")
 
 logging.basicConfig(level=logging.INFO)
 
@@ -103,7 +105,7 @@ async def google(message: types.Message):
                 except BadRequest:
                     await types.ChatActions.typing()
 
-                    message.reply(
+                    await message.reply(
                         "Ой! Какая-то неправильная картинка пришла. Попробуй еще раз."
                     )
 
@@ -185,12 +187,9 @@ async def get_post_from_dotathread(message: types.Message):
     return await message.reply(post_data.message, reply_markup=keys)
 
 
-first_word = ("Я думаю, ", "", "Наверное, ", "Базарю, ", "Возможно, ", "Конечно же, ")
-
-
 @dp.message_handler(regexp=rf"{BOT_NAME}, (.*\S.*) или (.*\S.*)\?")
 async def fate_decision_or(message: types.Message):
-    _message = message.text[len(BOT_NAME) + 2 : -1]
+    _message = message.text[len(BOT_NAME) + 2: -1]
     return await message.reply(
         f"{random.choice(first_word)}{random.choice(_message.split(' или '))}."
     )
@@ -198,7 +197,7 @@ async def fate_decision_or(message: types.Message):
 
 @dp.message_handler(regexp=rf"{BOT_NAME}, (.*\S.*) ли (.*\S.*)\?")
 async def fate_decision(message: types.Message):
-    _message = message.text[len(BOT_NAME) + 2 : -1]
+    _message = message.text[len(BOT_NAME) + 2: -1]
 
     correct_answer = f"{random.choice(first_word)}{_message.split(' ли ')[1]} {_message.split(' ли ')[0]}."
     incorrect_answer = random.choice(("Нет.", "Ни в коем случае."))
