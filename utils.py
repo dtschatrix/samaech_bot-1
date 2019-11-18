@@ -7,6 +7,7 @@ from aiohttp import ClientSession
 
 client = ClientSession()
 
+
 class GoogleSearchResult:
     def __init__(self, title: str, link: str, snippet: str):
         self.code = 200
@@ -71,7 +72,6 @@ class YoutubeUtils(CommonUtils):
                 json_data = await request.json()
                 item = json_data["items"][0]
 
-
             return YoutubeSearchResult(
                 video_id=item["id"]["videoId"],
                 title=item["snippet"]["title"],
@@ -93,7 +93,9 @@ class GoogleUtils(CommonUtils):
     ) -> Union[GoogleSearchResult, GoogleImageResult, NotFoundResult]:
         try:
             if search_type == "text":
-                async with client.get(url=f"{self.BASE_URL}", params={"q": query, "num": 1}) as request:
+                async with client.get(
+                    url=f"{self.BASE_URL}", params={"q": query, "num": 1}
+                ) as request:
                     json_data = await request.json()
                     item = json_data["items"][0]
 
@@ -102,7 +104,9 @@ class GoogleUtils(CommonUtils):
                 )
 
             if search_type == "image":
-                async with client.get(url=f"{self.BASE_URL}", params={"q": query, "searchType": "image"}) as request:
+                async with client.get(
+                    url=f"{self.BASE_URL}", params={"q": query, "searchType": "image"}
+                ) as request:
                     json_data = await request.json()
                     item = random.choice(json_data["items"])
 
