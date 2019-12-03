@@ -4,6 +4,7 @@ import random
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.utils.exceptions import BadRequest
+from aiogram.utils import executor
 
 from utils import DvachUtils, GoogleUtils, YoutubeUtils
 
@@ -45,7 +46,7 @@ async def empty_query(message: types.Message) -> None:
         reply_to_message_id=message.message_id,
     )
 
-@dp.message_handler(regexp='^(ору|jhe)')
+@dp.message_handler(regexp='^(ору[\s]|jhe)|[\s]ору[\s]|орунах')
 async def rofl_handler(message: types.Message) -> None:
     await bot.send_sticker(message.chat.id, sticker=random.choice(stickers))
 
