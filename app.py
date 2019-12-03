@@ -1,5 +1,6 @@
 import logging
 import os
+import random
 
 from aiogram import Bot, Dispatcher, executor, types
 
@@ -19,6 +20,11 @@ dp = Dispatcher(bot)
 google_api = GoogleUtils()
 youtube_api = YoutubeUtils()
 
+stickers = [
+    'CAADAgADHgADybg6G8cUXx1GrTg8FgQ',
+    'CAADAgADkAEAAuaV7QYOHYd-PBwUiRYE',
+    'CAADAgADQAIAAuaV7QaT-yoFW4mwjRYE'
+]
 
 async def not_found(message: types.Message) -> None:
     await types.ChatActions.typing()
@@ -36,6 +42,9 @@ async def empty_query(message: types.Message) -> None:
         reply_to_message_id=message.message_id,
     )
 
+@dp.message_handler(regexp='^(ору|jhe)')
+async def rofl_handler(message: types.Message) -> None:
+    await bot.send_sticker(message.chat.id, sticker=random.choice(stickers))
 
 @dp.message_handler(content_types=["voice"])
 async def voice_recognition(message: types.Message):
