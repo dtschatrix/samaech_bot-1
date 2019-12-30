@@ -25,17 +25,16 @@ youtube_api = YoutubeUtils()
 dvach_api = DvachUtils()
 
 stickers = [
-    'CAADAgADHgADybg6G8cUXx1GrTg8FgQ',
-    'CAADAgADkAEAAuaV7QYOHYd-PBwUiRYE',
-    'CAADAgADQAIAAuaV7QaT-yoFW4mwjRYE'
+    "CAADAgADHgADybg6G8cUXx1GrTg8FgQ",
+    "CAADAgADkAEAAuaV7QYOHYd-PBwUiRYE",
+    "CAADAgADQAIAAuaV7QaT-yoFW4mwjRYE",
 ]
+
 
 async def not_found(message: types.Message) -> None:
     await types.ChatActions.typing()
 
-    await message.reply_photo(
-        types.InputFile("content/img/not-found.png"), caption="Я ничего не нашел."
-    )
+    await message.reply_photo(types.InputFile("content/img/not-found.png"), caption="Я ничего не нашел.")
 
 
 async def empty_query(message: types.Message) -> None:
@@ -46,9 +45,11 @@ async def empty_query(message: types.Message) -> None:
         reply_to_message_id=message.message_id,
     )
 
-@dp.message_handler(regexp='^(ору[\s]|jhe)|[\s]ору[\s]|орунах')
+
+@dp.message_handler(regexp="^(ору[\s]|jhe)|[\s]ору[\s]|орунах")
 async def rofl_handler(message: types.Message) -> None:
     await bot.send_sticker(message.chat.id, sticker=random.choice(stickers))
+
 
 @dp.message_handler(content_types=["voice"])
 async def voice_recognition(message: types.Message):
@@ -99,24 +100,15 @@ async def google(message: types.Message):
                     caption = f"<i>{response.snippet}</i>"
 
                     keys = types.InlineKeyboardMarkup()
-                    keys.add(
-                        types.InlineKeyboardButton(
-                            "Source Link", url=response.context_link
-                        )
-                    )
+                    keys.add(types.InlineKeyboardButton("Source Link", url=response.context_link))
 
                     return await message.reply_photo(
-                        photo=response.link,
-                        caption=caption,
-                        parse_mode="HTML",
-                        reply_markup=keys,
+                        photo=response.link, caption=caption, parse_mode="HTML", reply_markup=keys,
                     )
                 except BadRequest:
                     await types.ChatActions.typing()
 
-                    await message.reply(
-                        "Ой! Какая-то неправильная картинка пришла. Попробуй еще раз."
-                    )
+                    await message.reply("Ой! Какая-то неправильная картинка пришла. Попробуй еще раз.")
 
             else:
                 await types.ChatActions.typing()
@@ -159,8 +151,7 @@ async def get_last_dotathread(message: types.Message):
     keys.add(types.InlineKeyboardButton("Go to thread!", url=thread.link))
 
     return await message.reply_photo(
-        thread.image if "https" in thread.image else types.InputFile(thread.image),
-        reply_markup=keys,
+        thread.image if "https" in thread.image else types.InputFile(thread.image), reply_markup=keys,
     )
 
 
@@ -184,29 +175,23 @@ async def get_post_from_dotathread(message: types.Message):
         content_extension = content.split(".")[-1]
 
         if content_extension == "jpg" or content_extension == "png":
-            return await message.reply_photo(
-                content, caption=post_data.message, reply_markup=keys
-            )
+            return await message.reply_photo(content, caption=post_data.message, reply_markup=keys)
 
         if content_extension == "mp4":
-            return await message.reply_video(
-                content, caption=post_data.message, reply_markup=keys
-            )
+            return await message.reply_video(content, caption=post_data.message, reply_markup=keys)
 
     return await message.reply(post_data.message, reply_markup=keys)
 
 
 @dp.message_handler(regexp=rf"{BOT_NAME}, (.*\S.*) или (.*\S.*)\?")
 async def fate_decision_or(message: types.Message):
-    _message = message.text[len(BOT_NAME) + 2: -1]
-    return await message.reply(
-        f"{random.choice(first_word)}{random.choice(_message.split(' или '))}."
-    )
+    _message = message.text[len(BOT_NAME) + 2 : -1]
+    return await message.reply(f"{random.choice(first_word)}{random.choice(_message.split(' или '))}.")
 
 
 @dp.message_handler(regexp=rf"{BOT_NAME}, (.*\S.*) ли (.*\S.*)\?")
 async def fate_decision(message: types.Message):
-    _message = message.text[len(BOT_NAME) + 2: -1]
+    _message = message.text[len(BOT_NAME) + 2 : -1]
 
     correct_answer = f"{random.choice(first_word)}{_message.split(' ли ')[1]} {_message.split(' ли ')[0]}."
     incorrect_answer = random.choice(("Нет.", "Ни в коем случае."))
