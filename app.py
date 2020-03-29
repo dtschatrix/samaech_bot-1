@@ -205,9 +205,11 @@ async def fate_decision(message: types.Message):
     incorrect_answer = random.choice(("Нет.", "Ни в коем случае."))
 
     return await message.reply(random.choice([correct_answer, incorrect_answer]))
+
 @dp.message_handler(commands=['steamstat'])
 async def get_steamstat(message: types.Message):
-    steam_stat_data = await steamstat_api.get_response()
+    steam_stat_data = await steamstat_api.get_response(message.text)
+
     return await message.reply(steam_stat_data.message, parse_mode="Markdown")
 
 if __name__ == "__main__":

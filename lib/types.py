@@ -60,8 +60,7 @@ class DvachPost:
         self.images = images
 class SteamStatPost:
     def __init__(
-        self, message: str, message_link: str
+        self, message: str
     ) -> None:
         self.message = message
-        self.message_link = message_link
 
