@@ -4,8 +4,9 @@ import random
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.utils.exceptions import BadRequest
+from aiogram.utils import executor
 
-from utils import DvachUtils, GoogleUtils, YoutubeUtils
+from utils import DvachUtils, GoogleUtils, YoutubeUtils, SteamStatUtils
 
 TOKEN = os.getenv("BOT_TOKEN")
 VERSION = "0.0.2"
@@ -22,6 +23,7 @@ dp = Dispatcher(bot)
 google_api = GoogleUtils()
 youtube_api = YoutubeUtils()
 dvach_api = DvachUtils()
+steamstat_api = SteamStatUtils()
 
 
 async def not_found(message: types.Message) -> None:
@@ -203,7 +205,10 @@ async def fate_decision(message: types.Message):
     incorrect_answer = random.choice(("Нет.", "Ни в коем случае."))
 
     return await message.reply(random.choice([correct_answer, incorrect_answer]))
-
+@dp.message_handler(commands=['steamstat'])
+async def get_steamstat(message: types.Message):
+    steam_stat_data = await steamstat_api.get_response()
+    return await message.reply(steam_stat_data.message, parse_mode="Markdown")
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)

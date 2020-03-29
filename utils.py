@@ -15,10 +15,13 @@ from lib.types import (
     GoogleSearchResult,
     NotFoundResult,
     YoutubeSearchResult,
+    SteamStatPost,
 )
 
-client = ClientSession(timeout=ClientTimeout(total=30))
+fake_user_agent = f"Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5"
 
+client = ClientSession(timeout=ClientTimeout(total=30))
+client_fake_user = ClientSession(headers={'User-Agent':fake_user_agent}) # this client only for fake useragent, probably merge with origin?
 
 class MLStripper(HTMLParser):
     def __init__(self):
@@ -178,3 +181,24 @@ class DvachUtils(CommonUtils):
                 )
             except ContentTypeError:
                 return DvachPost(message="API отвалилось.", message_link="#")
+class SteamStatUtils(CommonUtils):
+    async def get_response(self) -> str:
+        try:
+            URL = f"https://crowbar.steamstat.us/gravity.json"
+            
+            async with client_fake_user.get(URL, verify_ssl=False) as response:
+                json_data = await response.json()
+                data = await self.format_data(json_data)
+                return SteamStatPost(message=data, message_link="steamstat.us")
+        except Exception:
+            return SteamStatPost(message="Такого ключа нет :(", message_link= "steamstat.us")
+
+    async def format_data(self, data) -> str:
+        right_indexes = [2, 3, 4, 13, 14, 15, 22, 33, 38, 46, 54] # any suggestions to refactor this?
+        json_data = f""
+        for k in data["services"]:
+            if(data["services"].index(k) in right_indexes):
+                json_data += k[0] + ': ' + k[2] + '\n' 
+        return '`' + json_data +  '`'
+
+
