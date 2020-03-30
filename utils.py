@@ -15,10 +15,10 @@ from lib.types import (
     GoogleSearchResult,
     NotFoundResult,
     YoutubeSearchResult,
+    SteamStatPost,
 )
 
 client = ClientSession(timeout=ClientTimeout(total=30))
-
 
 class MLStripper(HTMLParser):
     def __init__(self):
@@ -178,3 +178,38 @@ class DvachUtils(CommonUtils):
                 )
             except ContentTypeError:
                 return DvachPost(message="API отвалилось.", message_link="#")
+class SteamStatUtils(CommonUtils):
+    user_fake_agent = f"Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5"
+    available_services = {"dota2": {33}, "csgo": {4,11,13,14,15,20,22}, "ingame": {38}, "online": {46}, "store": {54}}
+    async def get_response(self, data) -> str:
+        try:
+            URL = f"https://crowbar.steamstat.us/gravity.json"
+            param = data.split()[1] if len(data.split()) >= 2 else ''  
+            async with client.get(URL, verify_ssl=False, headers={'User-Agent':self.user_fake_agent}) as response:
+                json_data = await response.json()
+                data = await self.format_data(json_data, param)
+                return SteamStatPost(message=data)
+        except Exception:
+            return SteamStatPost(message="Что-то прозиошло с парсингом:(")
+
+    async def format_data(self, data, params) -> str:
+            json_data = f""
+            service = []
+            if params == '':
+                service_set = list(self.available_services.values())
+                for x in service_set:
+                    for v in x:
+                        service.append(v)
+
+            elif params in self.available_services.keys():
+                service = self.available_services.get(params)
+            
+            else:
+             return f"Какой-то странный ключ пришёл :("
+
+            for k in service:
+                json_data += data["services"][k][0] + ': ' + data["services"][k][2] + '\n'
+            return '`' + json_data +  '`'      
+            
+            
+
