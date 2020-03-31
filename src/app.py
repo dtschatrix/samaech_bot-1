@@ -1,6 +1,5 @@
 import logging
 import os
-import random
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.utils.exceptions import BadRequest
@@ -13,7 +12,14 @@ VERSION = "0.0.2"
 ADMIN_ID = int(os.getenv("ADMIN_ID")) if os.getenv("ADMIN_ID") else 0
 
 BOT_NAME = "Валентин"
-first_word = ("Я думаю, ", "", "Наверное, ", "Базарю, ", "Возможно, ", "Конечно же, ")
+first_word = (
+    "Я думаю, ",
+    "",
+    "Наверное, ",
+    "Базарю, ",
+    "Возможно, ",
+    "Конечно же, ",
+)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -35,7 +41,10 @@ stickers = [
 async def not_found(message: types.Message) -> None:
     await types.ChatActions.typing()
 
-    await message.reply_photo(types.InputFile("content/img/not-found.png"), caption="Я ничего не нашел.")
+    await message.reply_photo(
+        types.InputFile("content/img/not-found.png"),
+        caption="Я ничего не нашел.",
+    )
 
 
 async def empty_query(message: types.Message) -> None:
@@ -45,24 +54,6 @@ async def empty_query(message: types.Message) -> None:
         caption="А запрос мне самому придумать?",
         reply_to_message_id=message.message_id,
     )
-
-
-@dp.message_handler(regexp="^(ору[\s]|jhe)|[\s]ору[\s]|орунах")
-async def rofl_handler(message: types.Message) -> None:
-    await bot.send_sticker(message.chat.id, sticker=random.choice(stickers))
-
-
-@dp.message_handler(content_types=["voice"])
-async def voice_recognition(message: types.Message):
-    await types.ChatActions.typing()
-
-    await message.reply("Not Implemented Yet")
-
-
-@dp.message_handler(commands=["ver"], user_id=ADMIN_ID)
-async def version(message: types.Message):
-    await types.ChatActions.typing()
-    await message.reply(f"<b>Version: {VERSION}</b>", parse_mode="HTML")
 
 
 @dp.message_handler(commands=["g", "gi", "p"], chat_id=-1001141653473)
@@ -82,12 +73,20 @@ async def google(message: types.Message):
             if response.code != 404:
                 await types.ChatActions.typing()
 
-                result = f"<b>{response.title}</b>\n\n<i>{response.snippet}</i>"
+                result = (
+                    f"<b>{response.title}</b>\n\n<i>{response.snippet}</i>"
+                )
 
                 keys = types.InlineKeyboardMarkup()
-                keys.add(types.InlineKeyboardButton("Source Link", url=response.link))
+                keys.add(
+                    types.InlineKeyboardButton(
+                        "Source Link", url=response.link
+                    )
+                )
 
-                return await message.reply(result, parse_mode="HTML", reply_markup=keys)
+                return await message.reply(
+                    result, parse_mode="HTML", reply_markup=keys
+                )
             else:
                 return await not_found(message)
 
@@ -101,15 +100,24 @@ async def google(message: types.Message):
                     caption = f"<i>{response.snippet}</i>"
 
                     keys = types.InlineKeyboardMarkup()
-                    keys.add(types.InlineKeyboardButton("Source Link", url=response.context_link))
+                    keys.add(
+                        types.InlineKeyboardButton(
+                            "Source Link", url=response.context_link
+                        )
+                    )
 
                     return await message.reply_photo(
-                        photo=response.link, caption=caption, parse_mode="HTML", reply_markup=keys,
+                        photo=response.link,
+                        caption=caption,
+                        parse_mode="HTML",
+                        reply_markup=keys,
                     )
                 except BadRequest:
                     await types.ChatActions.typing()
 
-                    await message.reply("Ой! Какая-то неправильная картинка пришла. Попробуй еще раз.")
+                    await message.reply(
+                        "Ой! Какая-то неправильная картинка пришла. Попробуй еще раз."
+                    )
 
             else:
                 await types.ChatActions.typing()
@@ -133,8 +141,14 @@ async def youtube(message: types.Message):
             await types.ChatActions.typing()
             result = f'<a href="{response.link}">{response.title}</a>\n\n<i>{response.description}</i>'
             keys = types.InlineKeyboardMarkup()
-            keys.add(types.InlineKeyboardButton("Open in YouTube", url=response.link))
-            return await message.reply(result, parse_mode="HTML", reply_markup=keys)
+            keys.add(
+                types.InlineKeyboardButton(
+                    "Open in YouTube", url=response.link
+                )
+            )
+            return await message.reply(
+                result, parse_mode="HTML", reply_markup=keys
+            )
 
         else:
             await types.ChatActions.typing()
@@ -152,7 +166,10 @@ async def get_last_dotathread(message: types.Message):
     keys.add(types.InlineKeyboardButton("Go to thread!", url=thread.link))
 
     return await message.reply_photo(
-        thread.image if "https" in thread.image else types.InputFile(thread.image), reply_markup=keys,
+        thread.image
+        if "https" in thread.image
+        else types.InputFile(thread.image),
+        reply_markup=keys,
     )
 
 
@@ -166,44 +183,40 @@ async def get_post_from_dotathread(message: types.Message):
         post_data = await dvach_api.get_post(thread_id=thread.thread_id)
 
     elif command == "/lastpost" or command == "/lastpost@samaech_bot":
-        post_data = await dvach_api.get_post(thread_id=thread.thread_id, offset="last")
+        post_data = await dvach_api.get_post(
+            thread_id=thread.thread_id, offset="last"
+        )
 
     keys = types.InlineKeyboardMarkup()
-    keys.add(types.InlineKeyboardButton("Go to message!", url=post_data.message_link))
+    keys.add(
+        types.InlineKeyboardButton(
+            "Go to message!", url=post_data.message_link
+        )
+    )
 
     if post_data.images:
         content = post_data.images[0]
         content_extension = content.split(".")[-1]
 
         if content_extension == "jpg" or content_extension == "png":
-            return await message.reply_photo(content, caption=post_data.message, reply_markup=keys)
+            return await message.reply_photo(
+                content, caption=post_data.message, reply_markup=keys
+            )
 
         if content_extension == "mp4":
-            return await message.reply_video(content, caption=post_data.message, reply_markup=keys)
+            return await message.reply_video(
+                content, caption=post_data.message, reply_markup=keys
+            )
 
     return await message.reply(post_data.message, reply_markup=keys)
 
 
-@dp.message_handler(regexp=rf"{BOT_NAME}, (.*\S.*) или (.*\S.*)\?")
-async def fate_decision_or(message: types.Message):
-    _message = message.text[len(BOT_NAME) + 2 : -1]
-    return await message.reply(f"{random.choice(first_word)}{random.choice(_message.split(' или '))}.")
-
-
-@dp.message_handler(regexp=rf"{BOT_NAME}, (.*\S.*) ли (.*\S.*)\?")
-async def fate_decision(message: types.Message):
-    _message = message.text[len(BOT_NAME) + 2 : -1]
-
-    correct_answer = f"{random.choice(first_word)}{_message.split(' ли ')[1]} {_message.split(' ли ')[0]}."
-    incorrect_answer = random.choice(("Нет.", "Ни в коем случае."))
-
-    return await message.reply(random.choice([correct_answer, incorrect_answer]))
-
-@dp.message_handler(commands=['steamstat'])
+@dp.message_handler(commands=["steamstat"])
 async def get_steamstat(message: types.Message):
     steam_stat_data = await steamstat_api.get_response(message.text)
 
     return await message.reply(steam_stat_data.message, parse_mode="Markdown")
+
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
