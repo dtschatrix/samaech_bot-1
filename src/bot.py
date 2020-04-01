@@ -21,7 +21,9 @@ from utils.YouTube import YouTubeAPI
 from utils.Dvach import DvachAPI, POST_OFFSET
 from utils.SteamStats import SteamStatsAPI
 
-VERSION = "0.0.1"
+from middlewares.middlewares import is_chat_allowed, admin_only
+
+VERSION = "0.0.2"
 BOT_NAME = os.getenv("BOT_NAME") or "Валентин"
 
 app = Client(
@@ -34,6 +36,7 @@ app = Client(
 
 
 @app.on_message(Filters.command("ver"))
+@admin_only
 def start(client: Client, message: Message) -> None:
     reply_message = message.reply_text(VERSION, message.chat.id)
     sleep(2)
@@ -52,8 +55,8 @@ def rofl_handler(client: Client, message: Message) -> None:
 
 
 @app.on_message(Filters.command(["g", "gi", "p"]))
+@is_chat_allowed
 def google(client: Client, message: Message) -> None:
-
     query = " ".join(message.command[1:])
     command = message.command[0]
 
@@ -90,6 +93,7 @@ def google(client: Client, message: Message) -> None:
 
 
 @app.on_message(Filters.command(["y"]))
+@is_chat_allowed
 def youtube(client: Client, message: Message) -> None:
     query = " ".join(message.command[1:])
 
@@ -182,17 +186,19 @@ def fate_decision_or(client: Client, message: Message) -> None:
     Filters.regex(f"(?i)^{BOT_NAME}(,|\s)(\s|)(.*\S.*)\sли\s(.*\S.*)\?")
 )
 def fate_question(client: Client, message: Message) -> None:
-    _message = Common.pronoun_replace(message.text).replace("?", "").split()
+    _message = " ".join(
+        Common.pronoun_replace(message.text).replace("?", "").split()[1:]
+    )
 
     random.seed(datetime.now())
 
-    correct_answer = f"{_message[-1]} {_message[1]}"
+    correct_answer = f"{_message.split('ли')[1]} {_message.split('ли')[0]}"
     incorrect_answer = random.choice(("Нет.", "Ни в коем случае."))
 
     message.reply_text(random.choice((correct_answer, incorrect_answer)))
 
 
-@app.on_message(Filters.command("steamstats"))
+@app.on_message(Filters.command(["steamstats", "steamstat"]))
 def steamstats(client: Client, message: Message):
     query = " ".join(message.command[1:]) if len(message.command) > 1 else None
 
