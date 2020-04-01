@@ -21,12 +21,9 @@ def is_chat_allowed(func):
 
 
 def admin_only(func):
-
-    allowed_chats = (int(os.getenv("ADMIN_ID")),)
-
     @functools.wraps(func)
     def inner(client: Client, message: Message, *args, **kwargs):
-        if message.chat.id in allowed_chats:
+        if message.chat.id == int(os.getenv("ADMIN_ID")):
             return func(client, message, *args, **kwargs)
 
     return inner
