@@ -23,7 +23,7 @@ from utils.SteamStats import SteamStatsAPI
 
 from middlewares.middlewares import is_chat_allowed, admin_only
 
-VERSION = "0.0.2"
+VERSION = "0.0.3"
 BOT_NAME = os.getenv("BOT_NAME") or "Валентин"
 
 app = Client(
