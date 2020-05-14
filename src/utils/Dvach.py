@@ -67,9 +67,6 @@ class DvachAPI:
         response: Dict, subject: str, board: str
     ) -> DvachThread:
         for thread in response["threads"]:
-            print(
-                f'CHECK {subject} in {thread["posts"][0]["comment"].lower()}'
-            )
             if thread["posts"][0]["tags"] == subject or (
                 subject in thread["posts"][0]["comment"].lower()
             ):

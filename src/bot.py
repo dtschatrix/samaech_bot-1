@@ -222,28 +222,33 @@ def steamstats(client: Client, message: Message):
 @is_chat_allowed
 def get_random_video_from_2ch(client: Client, message: Message) -> None:
     with DvachAPI() as dvch:
-        thread = dvch.get_thread(board="b", subject="tik tok")
+        try:
+            thread = dvch.get_thread(board="b", subject="tik tok")
 
-        if not thread:
-            thread = dvch.get_thread(board="b", subject="webm")
+            if not thread:
+                thread = dvch.get_thread(board="b", subject="webm")
 
-        post_data = dvch.get_random_mp4_post(thread_id=thread.id, board="b")
+            post_data = dvch.get_random_mp4_post(
+                thread_id=thread.id, board="b"
+            )
 
-        buttons = InlineKeyboardMarkup(
-            [
+            buttons = InlineKeyboardMarkup(
                 [
-                    InlineKeyboardButton(
-                        text="Go to message!", url=post_data.message_link
-                    )
+                    [
+                        InlineKeyboardButton(
+                            text="Go to message!", url=post_data.message_link
+                        )
+                    ]
                 ]
-            ]
-        )
+            )
 
-        message.reply_video(
-            post_data.images[0],
-            caption=post_data.message,
-            reply_markup=buttons,
-        )
+            message.reply_video(
+                post_data.images[0],
+                caption=post_data.message,
+                reply_markup=buttons,
+            )
+        except:
+            get_random_video_from_2ch(client, message)
 
 
 if __name__ == "__main__":
