@@ -30,7 +30,7 @@ app = Client(
     ":memory:",
     os.getenv("API_ID"),
     os.getenv("API_HASH"),
-    bot_token=os.getenv("BOT_TOKEN"),
+    bot_token=os.environ.get("BOT_TOKEN"),
     workers=10,
 )
 
@@ -216,6 +216,34 @@ def steamstats(client: Client, message: Message):
             )
 
     return Common.send_not_found_message(message)
+
+
+@app.on_message(Filters.command(["v"]))
+@is_chat_allowed
+def get_random_video_from_2ch(client: Client, message: Message) -> None:
+    with DvachAPI() as dvch:
+        thread = dvch.get_thread(board="b", subject="Цуиь")
+
+        if not thread:
+            thread = dvch.get_thread(board="b", subject="webm")
+
+        post_data = dvch.get_random_mp4_post(thread_id=thread.id, board="b")
+
+        buttons = InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        text="Go to message!", url=post_data.message_link
+                    )
+                ]
+            ]
+        )
+
+        message.reply_video(
+            post_data.images[0],
+            caption=post_data.message,
+            reply_markup=buttons,
+        )
 
 
 if __name__ == "__main__":
