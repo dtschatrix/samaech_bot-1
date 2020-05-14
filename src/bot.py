@@ -222,7 +222,7 @@ def steamstats(client: Client, message: Message):
 @is_chat_allowed
 def get_random_video_from_2ch(client: Client, message: Message) -> None:
     with DvachAPI() as dvch:
-        thread = dvch.get_thread(board="b", subject="цуиь")
+        thread = dvch.get_thread(board="b", subject="tik tok")
 
         if not thread:
             thread = dvch.get_thread(board="b", subject="webm")
