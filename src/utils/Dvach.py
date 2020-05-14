@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from typing import Dict, NamedTuple, List, Optional
 import random
@@ -21,6 +22,11 @@ class DvachPost(NamedTuple):
 class POST_OFFSET(Enum):
     RANDOM = 1
     LAST = 2
+
+
+class POST_TYPE:
+    MP4 = "mp4"
+    ANY = "any"
 
 
 class MLStripper(HTMLParser):
@@ -61,7 +67,10 @@ class DvachAPI:
         response: Dict, subject: str, board: str
     ) -> DvachThread:
         for thread in response["threads"]:
-            if thread["posts"][0]["tags"] == subject:
+            if (
+                thread["posts"][0]["tags"] == subject
+                or subject in thread["posts"][0]["comment"].lower()
+            ):
                 image = f'https://2ch.hk{random.choice(thread["posts"][0]["files"])["path"]}'
 
                 thread_url = (
@@ -97,7 +106,7 @@ class DvachAPI:
         offset: POST_OFFSET = POST_OFFSET.RANDOM,
     ):
         url = f"https://2ch.hk/makaba/mobile.fcgi?task=get_thread&board={board}&thread={thread_id}&num={thread_id}"
-        THREAD_LINK = f"https://2ch.hk/vg/res/{thread_id}.html"
+        THREAD_LINK = f"https://2ch.hk/{board}/res/{thread_id}.html"
         response = self._session.get(url=url)
         data = response.json()
 
@@ -118,4 +127,35 @@ class DvachAPI:
 
         return DvachPost(
             message=message, message_link=message_link, images=images
+        )
+
+    def get_random_mp4_post(self, thread_id: str = None, board: str = None):
+        url = f"https://2ch.hk/makaba/mobile.fcgi?task=get_thread&board={board}&thread={thread_id}&num={thread_id}"
+        thread_url = f"https://2ch.hk/{board}/res/{thread_id}.html"
+        response = self._session.get(url=url)
+        data = response.json()
+
+        found = False
+
+        post_data = random.choice(data)
+
+        while not found:
+            media = [
+                f'https://2ch.hk{_file["path"]}'
+                for _file in post_data["files"]
+                if post_data["files"]
+            ]
+            for item in media:
+                if "mp4" in item:
+                    found = item
+                    break
+            else:
+                random.seed(datetime.now())
+                post_data = random.choice(data)
+
+        message = self._strip_tags(post_data["comment"].replace("<br>", "\n"))
+        message_link = f'{thread_url}#{post_data["num"]}'
+
+        return DvachPost(
+            message=message, message_link=message_link, images=[found]
         )
