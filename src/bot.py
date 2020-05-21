@@ -29,7 +29,7 @@ from utils.SteamStats import SteamStatsAPI
 from middlewares.middlewares import is_chat_allowed, admin_only
 from py_2ch_api.client import ChAPI
 
-VERSION = "0.0.4"
+VERSION = "0.0.5"
 BOT_NAME = os.getenv("BOT_NAME") or "Валентин"
 
 app = Client(
@@ -44,7 +44,7 @@ app = Client(
 @app.on_message(Filters.command("ver"))
 @admin_only
 def start(client: Client, message: Message) -> None:
-    reply_message = message.reply_text(VERSION, message.chat.id)
+    reply_message = message.reply_text(VERSION)
     sleep(2)
     client.delete_messages(
         message.chat.id, [message.message_id, reply_message.message_id]
@@ -161,20 +161,25 @@ def get_post_from_dotathread(client: Client, message: Message):
                         content_type == MEDIA_TYPE.JPEG
                         or content_type == MEDIA_TYPE.PNG
                     ):
-                        return message.reply_photo(
-                            content_url, caption=comment,
+                        return client.send_photo(
+                            message.chat.id, content_url, caption=comment,
                         )
 
                     if content_type == MEDIA_TYPE.MP4:
-                        return message.reply_video(
-                            content_url, caption=comment, parse_mode="html",
+                        return client.send_video(
+                            message.chat.id,
+                            content_url,
+                            caption=comment,
+                            parse_mode="html",
                         )
                 except MediaEmpty:
-                    return message.reply_text(
-                        post_data.comment, parse_mode="html"
+                    return client.send_message(
+                        message.chat.id, post_data.comment, parse_mode="html"
                     )
 
-        return message.reply_text(comment, parse_mode="html")
+        return client.send_message(
+            message.chat.id, post_data.comment, parse_mode="html"
+        )
 
 
 @app.on_message(
@@ -248,7 +253,9 @@ def get_random_video_from_2ch(client: Client, message: Message) -> None:
 
                     result = random.choice(media)
 
-                    message.reply_video(ch.build_url(result.path))
+                    client.send_video(
+                        message.chat.id, ch.build_url(result.path)
+                    )
     except:
         get_random_video_from_2ch(client, message)
 
