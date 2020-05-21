@@ -174,12 +174,10 @@ def get_post_from_dotathread(client: Client, message: Message):
                         )
                 except MediaEmpty:
                     return client.send_message(
-                        message.chat.id, post_data.comment, parse_mode="html"
+                        message.chat.id, comment, parse_mode="html"
                     )
 
-        return client.send_message(
-            message.chat.id, post_data.comment, parse_mode="html"
-        )
+        return client.send_message(message.chat.id, comment, parse_mode="html")
 
 
 @app.on_message(
