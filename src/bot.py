@@ -1,6 +1,9 @@
 from datetime import datetime
 from time import sleep
 import random
+
+from py_2ch_api.constants import FILE_TYPE, MEDIA_TYPE
+from py_2ch_api.models import Thread
 from pyrogram import (
     Client,
     Message,
@@ -9,6 +12,9 @@ from pyrogram import (
     InlineKeyboardMarkup,
 )
 import os
+
+from pyrogram.errors import MediaEmpty
+
 from constants import constants
 from utils.common import Common
 from utils.Google import (
@@ -18,12 +24,12 @@ from utils.Google import (
     GoogleResponse,
 )
 from utils.YouTube import YouTubeAPI
-from utils.Dvach import DvachAPI, POST_OFFSET
 from utils.SteamStats import SteamStatsAPI
 
 from middlewares.middlewares import is_chat_allowed, admin_only
+from py_2ch_api.client import ChAPI
 
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 BOT_NAME = os.getenv("BOT_NAME") or "Валентин"
 
 app = Client(
@@ -109,64 +115,66 @@ def youtube(client: Client, message: Message) -> None:
 
 
 @app.on_message(Filters.command("dotathread"))
-def get_last_dotathread_link(client: Client, message: Message) -> None:
-    # TODO add get latest thread by tags
-    with DvachAPI() as ch_client:
-        thread = ch_client.get_thread("vg", "dota2")
+def get_last_dotathread_link(client: Client, message: Message) -> Thread:
+    with ChAPI(board="vg") as ch:
+        threads = ch.get_board_threads(tag="dota")
 
-        if thread:
-            buttons = [[InlineKeyboardButton(text="thread", url=thread.url)]]
+        if threads:
+            thread = threads[0]
+            thread_url = f"https://2ch.hk/vg/res/{thread.num}.html"
+            buttons = [[InlineKeyboardButton(text="thread", url=thread_url)]]
 
             client.send_photo(
                 message.chat.id,
-                thread.image,
+                ch.build_url(thread.opening_post.files[0].path),
+                caption=thread.opening_post.comment,
                 reply_markup=InlineKeyboardMarkup(buttons),
+                parse_mode="HTML",
             )
-        else:
-            Common.send_not_found_message(message)
+            return thread
 
 
 @app.on_message(Filters.command(["lastpost", "randpost"]))
 def get_post_from_dotathread(client: Client, message: Message):
     command = message.command[0]
 
-    with DvachAPI() as ch_client:
-        thread = ch_client.get_thread("vg", "dota2")
+    with ChAPI(board="vg") as ch:
+        threads = ch.get_board_threads(tag="dota")
 
-        if command == "lastpost":
-            post_data = ch_client.get_post(
-                thread_id=thread.id, board="vg", offset=POST_OFFSET.LAST
-            )
+        if threads:
+            thread = threads[0]
+            posts = ch.get_thread(thread=thread)
 
-        if command == "randpost":
-            post_data = ch_client.get_post(
-                thread_id=thread.id, board="vg", offset=POST_OFFSET.RANDOM
-            )
+            if command == "lastpost":
+                post_data = posts[-1]
+            if command == "randpost":
+                post_data = random.choice(posts)
 
-        buttons = InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="Go to message!", url=post_data.message_link
+            comment = post_data.comment.replace("<br>", "\n")
+
+            if post_data.files:
+                content = post_data.files[0]
+                content_type = FILE_TYPE().get(content.type)
+                content_url = ch.build_url(content.path)
+                try:
+                    if (
+                        content_type == MEDIA_TYPE.JPEG
+                        or content_type == MEDIA_TYPE.PNG
+                    ):
+                        return message.reply_photo(
+                            content_url, caption=comment,
+                        )
+
+                    if content_type == MEDIA_TYPE.MP4:
+                        return message.reply_video(
+                            content_url, caption=comment, parse_mode="html",
+                        )
+                except MediaEmpty:
+                    return message.reply_text(
+                        post_data.comment, parse_mode="html"
                     )
-                ]
-            ]
-        )
 
-        if post_data.images:
-            content = post_data.images[0]
-            content_ext = content.split(".")[-1]
-
-            if content_ext == "jpg" or content_ext == "png":
-                return message.reply_photo(
-                    content, caption=post_data.message, reply_markup=buttons
-                )
-
-            if content_ext == "mp4":
-                return message.reply_video(
-                    content, caption=post_data.message, reply_markup=buttons
-                )
-        return message.reply_text(post_data.message, reply_markup=buttons)
+        return message.reply_text(comment, parse_mode="html")
 
 
 @app.on_message(
@@ -221,34 +229,28 @@ def steamstats(client: Client, message: Message):
 @app.on_message(Filters.command(["v"]))
 @is_chat_allowed
 def get_random_video_from_2ch(client: Client, message: Message) -> None:
-    with DvachAPI() as dvch:
-        try:
-            thread = dvch.get_thread(board="b", subject="tik tok")
+    try:
+        with ChAPI(board="b") as ch:
+            threads = ch.get_board_threads(subject="tik tok")
 
-            if not thread:
-                thread = dvch.get_thread(board="b", subject="webm")
+            if len(threads) == 0:
+                threads = ch.get_board_threads(subject="webm")
 
-            post_data = dvch.get_random_mp4_post(
-                thread_id=thread.id, board="b"
-            )
+            if threads:
 
-            buttons = InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text="Go to message!", url=post_data.message_link
-                        )
-                    ]
-                ]
-            )
+                thread = threads[0]
+                media = ch.get_all_media_from_thread(
+                    thread=thread, media_type=MEDIA_TYPE.MP4
+                )
 
-            message.reply_video(
-                post_data.images[0],
-                caption=post_data.message,
-                reply_markup=buttons,
-            )
-        except:
-            get_random_video_from_2ch(client, message)
+                if media:
+                    random.seed(datetime.now())
+
+                    result = random.choice(media)
+
+                    message.reply_video(ch.build_url(result.path))
+    except:
+        get_random_video_from_2ch(client, message)
 
 
 if __name__ == "__main__":

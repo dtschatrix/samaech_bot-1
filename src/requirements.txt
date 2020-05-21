@@ -1,3 +1,4 @@
 pyrogram
 tgcrypto
 requests
+git+https://github.com/yevhenii-nepsha/py-2ch-api.git
