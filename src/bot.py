@@ -38,10 +38,12 @@ app = Client(
     os.getenv("API_HASH"),
     bot_token=os.environ.get("BOT_TOKEN"),
     workers=10,
-)
+).start()
+
+bot_username = app.get_me()["username"]
 
 
-@app.on_message(Filters.command("ver"))
+@app.on_message(Filters.command(["ver", f"ver@{bot_username}"]))
 @admin_only
 def start(client: Client, message: Message) -> None:
     reply_message = message.reply_text(VERSION)
@@ -114,7 +116,7 @@ def youtube(client: Client, message: Message) -> None:
             Common.send_not_found_message(message)
 
 
-@app.on_message(Filters.command("dotathread"))
+@app.on_message(Filters.command(["dotathread", f"dotathread@{bot_username}"]))
 def get_last_dotathread_link(client: Client, message: Message) -> Thread:
     with ChAPI(board="vg") as ch:
         threads = ch.get_board_threads(tag="dota")
@@ -134,7 +136,16 @@ def get_last_dotathread_link(client: Client, message: Message) -> Thread:
             return thread
 
 
-@app.on_message(Filters.command(["lastpost", "randpost"]))
+@app.on_message(
+    Filters.command(
+        [
+            "lastpost",
+            "randpost",
+            f"lastpost@{bot_username}",
+            f"randpost@{bot_username}",
+        ]
+    )
+)
 def get_post_from_dotathread(client: Client, message: Message):
     command = message.command[0]
 
@@ -145,9 +156,9 @@ def get_post_from_dotathread(client: Client, message: Message):
             thread = threads[0]
             posts = ch.get_thread(thread=thread)
 
-            if command == "lastpost":
+            if command == "lastpost" or command == f"lastpost@{bot_username}":
                 post_data = posts[-1]
-            if command == "randpost":
+            if command == "randpost" or command == f"randpost@{bot_username}":
                 post_data = random.choice(posts)
 
             comment = post_data.comment.replace("<br>", "\n")
@@ -209,7 +220,16 @@ def fate_question(client: Client, message: Message) -> None:
     message.reply_text(random.choice((correct_answer, incorrect_answer)))
 
 
-@app.on_message(Filters.command(["steamstats", "steamstat"]))
+@app.on_message(
+    Filters.command(
+        [
+            "steamstats",
+            "steamstat",
+            f"steamstats@{bot_username}",
+            f"steamstat@{bot_username}",
+        ]
+    )
+)
 def steamstats(client: Client, message: Message):
     query = " ".join(message.command[1:]) if len(message.command) > 1 else None
 
@@ -229,14 +249,20 @@ def steamstats(client: Client, message: Message):
     return Common.send_not_found_message(message)
 
 
-@app.on_message(Filters.command(["t"]))
+@app.on_message(
+    Filters.command(["t", "w", f"t@{bot_username}", f"w@{bot_username}"])
+)
 @is_chat_allowed
-def get_random_video_from_2ch(
-    client: Client, message: Message, subject: str = "tik tok"
-) -> None:
+def get_random_video_from_2ch(client: Client, message: Message) -> None:
+    command = message.command[0]
+
     try:
         with ChAPI(board="b") as ch:
-            threads = ch.get_board_threads(subject=subject)
+
+            if command == "t" or command == f"t@{bot_username}":
+                threads = ch.get_board_threads(subject="tik tok")
+            elif command == "w" or command == f"w@{bot_username}":
+                threads = ch.get_board_threads(subject="webm")
 
             if threads:
 
@@ -254,17 +280,4 @@ def get_random_video_from_2ch(
                         message.chat.id, ch.build_url(result.path)
                     )
     except:
-        get_random_video_from_2ch(client, message, subject=subject)
-
-
-@app.on_message(Filters.command(["w"]))
-@is_chat_allowed
-def get_random_webm_from_2ch(client: Client, message: Message) -> None:
-    try:
-        get_random_video_from_2ch(client, message, subject="webm")
-    except:
-        get_random_video_from_2ch(client, message, subject="webm")
-
-
-if __name__ == "__main__":
-    app.run()
+        get_random_video_from_2ch(client, message)
