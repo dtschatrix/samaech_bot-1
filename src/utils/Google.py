@@ -26,8 +26,8 @@ class SEARCH_TYPE(Enum):
 class GoogleAPI:
     def __init__(
         self,
-        api_key: Optional[str] = os.getenv("GOOGLE_API_KEY"),
-        cx: Optional[str] = os.getenv("GOOGLE_CX"),
+        api_key: Optional[str] = os.environ.get("GOOGLE_API_KEY"),
+        cx: Optional[str] = os.environ.get("GOOGLE_CX"),
     ):
         self.API_KEY = api_key
         self.CX = cx

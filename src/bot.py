@@ -30,7 +30,7 @@ from middlewares.middlewares import is_chat_allowed, admin_only
 from py_2ch_api.client import ChAPI
 
 VERSION = "0.0.5"
-BOT_NAME = os.getenv("BOT_NAME") or "Валентин"
+BOT_NAME = os.environ.get("BOT_NAME", "Валентин")
 
 app = Client(
     ":memory:",
@@ -229,15 +229,14 @@ def steamstats(client: Client, message: Message):
     return Common.send_not_found_message(message)
 
 
-@app.on_message(Filters.command(["v"]))
+@app.on_message(Filters.command(["t"]))
 @is_chat_allowed
-def get_random_video_from_2ch(client: Client, message: Message) -> None:
+def get_random_video_from_2ch(
+    client: Client, message: Message, subject: str = "tik tok"
+) -> None:
     try:
         with ChAPI(board="b") as ch:
-            threads = ch.get_board_threads(subject="tik tok")
-
-            if len(threads) == 0:
-                threads = ch.get_board_threads(subject="webm")
+            threads = ch.get_board_threads(subject=subject)
 
             if threads:
 
@@ -255,7 +254,16 @@ def get_random_video_from_2ch(client: Client, message: Message) -> None:
                         message.chat.id, ch.build_url(result.path)
                     )
     except:
-        get_random_video_from_2ch(client, message)
+        get_random_video_from_2ch(client, message, subject=subject)
+
+
+@app.on_message(Filters.command(["w"]))
+@is_chat_allowed
+def get_random_webm_from_2ch(client: Client, message: Message) -> None:
+    try:
+        get_random_video_from_2ch(client, message, subject="webm")
+    except:
+        get_random_video_from_2ch(client, message, subject="webm")
 
 
 if __name__ == "__main__":

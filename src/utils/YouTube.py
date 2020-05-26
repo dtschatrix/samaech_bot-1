@@ -18,7 +18,9 @@ class YouTubeSearchResult(NamedTuple):
 
 
 class YouTubeAPI:
-    def __init__(self, api_key: str = os.getenv("GOOGLE_API_KEY")) -> None:
+    def __init__(
+        self, api_key: str = os.environ.get("GOOGLE_API_KEY")
+    ) -> None:
         self._session = requests.Session()
         self._api_key = api_key
         self.BASE_URL = (
