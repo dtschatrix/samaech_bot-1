@@ -8,8 +8,9 @@ def is_chat_allowed(func):
 
     # do not use hardcoded values
     allowed_chats = (
-        int(os.environ.get("ADMIN_ID")),
+        #int(os.environ.get("ADMIN_ID")),
         -1001141653473,
+        73060632,
     )
 
     @functools.wraps(func)
