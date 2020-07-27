@@ -1,7 +1,10 @@
+import os
+import random
 from datetime import datetime
 from time import sleep
-import random
+from uuid import uuid4
 
+from py_2ch_api.client import ChAPI
 from py_2ch_api.constants import FILE_TYPE, MEDIA_TYPE
 from py_2ch_api.models import Thread
 from pyrogram import (
@@ -11,27 +14,20 @@ from pyrogram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
-import os
-import io
-
 from pyrogram.errors import MediaEmpty
 
 from constants import constants
-from utils.common import Common
+from middlewares.middlewares import is_chat_allowed, admin_only
 from utils.Google import (
     GoogleAPI,
     SEARCH_TYPE,
     GoogleImageResponse,
     GoogleResponse,
 )
-from utils.YouTube import YouTubeAPI
-from utils.SteamStats import SteamStatsAPI
 from utils.GreenText import GreenTextImage
-
-from PIL import Image
-
-from middlewares.middlewares import is_chat_allowed, admin_only
-from py_2ch_api.client import ChAPI
+from utils.SteamStats import SteamStatsAPI
+from utils.YouTube import YouTubeAPI
+from utils.common import Common
 
 VERSION = "0.0.5"
 BOT_NAME = os.environ.get("BOT_NAME", "Валентин")
@@ -286,24 +282,22 @@ def get_random_video_from_2ch(client: Client, message: Message) -> None:
     except:
         get_random_video_from_2ch(client, message)
 
-@app.on_message(
-    Filters.regex('^>[а-яА-Яa-zA-Z0-9\sёъїі]+')
-)
+
+@app.on_message(Filters.regex("^>[а-яА-Яa-zA-Z0-9\sёъїі]+"))
 def text_to_greentext_picture(client: Client, message: Message):
-    GTI = GreenTextImage(sender=message.from_user.first_name,
-                          text=message.text)
-    
-    outfile = "quote.png"
-    image = GTI.createImage()
+    GTI = GreenTextImage(
+        sender=message.from_user.first_name, text=message.text
+    )
+
+    outfile = f"{uuid4()}.png"
+    image = GTI.create_image()
     image.save(outfile)
-    
-    #send as byte sequence?
+
+    # send as byte sequence?
     # imgByte = io.BytesIO()
     # image.save(imgByte, format='PNG')
     # imgByte = imgByte.getvalue()
-    
-    client.send_photo(
-        message.chat.id,
-        photo = 'quote.png'
-    )
-    
+
+    client.send_photo(message.chat.id, photo=outfile)
+
+    os.remove(outfile)
