@@ -17,7 +17,7 @@ class Coordinates(Enum):
     MAINIMAGE = (170, 170)
     MAINIMAGEROTATION = (30, 42)
     BACKGROUND = (450, 233)
-    MAINTEXTSIZE = (220, 225)
+    MAINTEXTSIZE = (250, 225)
     MAINTEXTOFFSET = (210, 62)
     HEADEROFFSET = (6, 0)
     HEADERROTATION = (350, 255)
@@ -26,3 +26,5 @@ class Coordinates(Enum):
 class Others(Enum):
     FONTSIZE = 15
     THREADOFFSET = 20
+    MAXLENGTHTEXT = 240
+    SPLITLENGTH = 30

@@ -3,6 +3,7 @@ from constants import ImageBuilderConstants as const
 from PIL import Image, ImageDraw, ImageFont
 import random
 from datetime import datetime as date
+import textwrap
 
 
 class GreenTextImage:
@@ -64,48 +65,43 @@ class GreenTextImage:
 
         return draw
 
-    def create_main_text(self, text_message: str):
+    def create_main_text(self, textMessage: str):
         draw = Image.new("RGBA", const.Coordinates.MAINTEXTSIZE.value)
         draw_text = ImageDraw.Draw(draw)
-
-        if len(text_message) > 60:
-            mainText = self.split_text(text_message, 32)  # test purposes()
-            draw_text.multiline_text(
-                const.Coordinates.NULL.value,
-                text=mainText,
-                font=self.Font,
-                fill=const.RGBColor.FGGREENTEXTCOLOR.value,
-            )
+        
+        if(len(textMessage) > const.Others.MAXLENGTHTEXT.value):
+            draw_text.multiline_text(const.Coordinates.NULL.value,
+                                text="я долбоеб и напечатал дохуя говна",
+                                font=self.Font,
+                                fill=const.RGBColor.FGGREENTEXTCOLOR.value)
+        elif(len(textMessage) > const.Others.SPLITLENGTH.value):
+            mainText = self.splitText(textMessage, const.Others.SPLITLENGTH.value)  # test purposes()
+            draw_text.multiline_text(const.Coordinates.NULL.value,
+                                text = mainText,
+                                font=self.Font,
+                                fill=const.RGBColor.FGGREENTEXTCOLOR.value)
         else:
-            draw_text.text(
-                const.Coordinates.NULL.value,
-                text=text_message,
-                font=self.Font,
-                fill=const.RGBColor.FGGREENTEXTCOLOR.value,
-            )
+            draw_text.text(const.Coordinates.NULL.value,
+                      text= textMessage,
+                      font=self.Font,
+                      fill=const.RGBColor.FGGREENTEXTCOLOR.value)
 
         return draw
 
     def combine_images(self, header, text):
         background = Image.new(
-            "RGBA",
-            const.Coordinates.BACKGROUND.value,
-            const.RGBColor.BGCOLOR.value,
-        )
+            "RGBA", const.Coordinates.BACKGROUND.value, const.RGBColor.BGCOLOR.value)
         image = Image.open(self.ImagePath, "r")
         out = image.resize(const.Coordinates.MAINIMAGE.value)
-
+        
         background.alpha_composite(header)
-        background.alpha_composite(
-            text, const.Coordinates.MAINTEXTOFFSET.value
-        )
+        background.alpha_composite(text, const.Coordinates.MAINTEXTOFFSET.value)
         background.paste(out, const.Coordinates.MAINIMAGEROTATION.value)
 
         return background
 
-    def split_text(self, text: str, length: int) -> str:
-        if length > len(text):
-            return text
-        return "\n".join(
-            text[i : i + length] for i in range(0, len(text), length)
-        )
+    def splitText(self, text: str, length: int) -> str:
+        wrapper = textwrap.TextWrapper(length)
+        word_list = wrapper.wrap(text)
+        return '\n'.join(word_list)
+      
