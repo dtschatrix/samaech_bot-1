@@ -65,24 +65,26 @@ class GreenTextImage:
 
         return draw
 
-    def create_main_text(self, textMessage: str):
+    def create_main_text(self, text_message: str):
         draw = Image.new("RGBA", const.Coordinates.MAINTEXTSIZE.value)
         draw_text = ImageDraw.Draw(draw)
         
-        if(len(textMessage) > const.Others.MAXLENGTHTEXT.value):
+        if(len(text_message) > const.Others.MAXLENGTHTEXT.value):
             draw_text.multiline_text(const.Coordinates.NULL.value,
                                 text="я долбоеб и напечатал дохуя говна",
                                 font=self.Font,
                                 fill=const.RGBColor.FGGREENTEXTCOLOR.value)
-        elif(len(textMessage) > const.Others.SPLITLENGTH.value):
-            mainText = self.splitText(textMessage, const.Others.SPLITLENGTH.value)  # test purposes()
+        elif(len(text_message) > const.Others.SPLITLENGTH.value):
+            mainText = self.split_text(
+                text_message, const.Others.SPLITLENGTH.value
+                ) 
             draw_text.multiline_text(const.Coordinates.NULL.value,
                                 text = mainText,
                                 font=self.Font,
                                 fill=const.RGBColor.FGGREENTEXTCOLOR.value)
         else:
             draw_text.text(const.Coordinates.NULL.value,
-                      text= textMessage,
+                      text= text_message,
                       font=self.Font,
                       fill=const.RGBColor.FGGREENTEXTCOLOR.value)
 
@@ -90,17 +92,24 @@ class GreenTextImage:
 
     def combine_images(self, header, text):
         background = Image.new(
-            "RGBA", const.Coordinates.BACKGROUND.value, const.RGBColor.BGCOLOR.value)
+            "RGBA",
+            const.Coordinates.BACKGROUND.value,
+            const.RGBColor.BGCOLOR.value)
         image = Image.open(self.ImagePath, "r")
         out = image.resize(const.Coordinates.MAINIMAGE.value)
         
         background.alpha_composite(header)
-        background.alpha_composite(text, const.Coordinates.MAINTEXTOFFSET.value)
+        background.alpha_composite(
+            text, const.Coordinates.MAINTEXTOFFSET.value
+        )
         background.paste(out, const.Coordinates.MAINIMAGEROTATION.value)
 
         return background
 
-    def splitText(self, text: str, length: int) -> str:
+    def split_text(self, text: str, length: int) -> str:
+        if length > len(text):
+            return text
+        
         wrapper = textwrap.TextWrapper(length)
         word_list = wrapper.wrap(text)
         return '\n'.join(word_list)
