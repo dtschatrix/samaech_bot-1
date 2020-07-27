@@ -37,10 +37,11 @@ VERSION = "0.0.5"
 BOT_NAME = os.environ.get("BOT_NAME", "Валентин")
 
 app = Client(
-    session_name="this",
-    api_id="1748867",
-    api_hash="4a68e6b4c4de475ae122d95ed4ec8809",
-    bot_token="934670846:AAHR5t6ZdXYCDjyhGL7f1UuwAamHYqwakhw",
+    ":memory:",
+    os.getenv("API_ID"),
+    os.getenv("API_HASH"),
+    bot_token=os.environ.get("BOT_TOKEN"),
+    workers=10,
 ).start()
 
 bot_username = app.get_me()["username"]
