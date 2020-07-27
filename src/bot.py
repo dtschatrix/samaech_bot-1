@@ -12,6 +12,7 @@ from pyrogram import (
     InlineKeyboardMarkup,
 )
 import os
+import io
 
 from pyrogram.errors import MediaEmpty
 
@@ -25,6 +26,9 @@ from utils.Google import (
 )
 from utils.YouTube import YouTubeAPI
 from utils.SteamStats import SteamStatsAPI
+from utils.GreenText import GreenTextImage
+
+from PIL import Image
 
 from middlewares.middlewares import is_chat_allowed, admin_only
 from py_2ch_api.client import ChAPI
@@ -281,3 +285,25 @@ def get_random_video_from_2ch(client: Client, message: Message) -> None:
                     )
     except:
         get_random_video_from_2ch(client, message)
+
+@app.on_message(
+    Filters.regex('^>[а-яА-Яa-zA-Z0-9\sёъїі]+')
+)
+def text_to_greentext_picture(client: Client, message: Message):
+    GTI = GreenTextImage(sender=message.from_user.first_name,
+                          text=message.text)
+    
+    outfile = "quote.png"
+    image = GTI.createImage()
+    image.save(outfile)
+    
+    #send as byte sequence?
+    # imgByte = io.BytesIO()
+    # image.save(imgByte, format='PNG')
+    # imgByte = imgByte.getvalue()
+    
+    client.send_photo(
+        message.chat.id,
+        photo = 'quote.png'
+    )
+    
